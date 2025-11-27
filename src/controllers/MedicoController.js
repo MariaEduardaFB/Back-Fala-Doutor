@@ -1,4 +1,3 @@
-// ...existing code...
 const { Medico } = require("../app/models")
 
 class MedicoController {
@@ -73,5 +72,4 @@ class MedicoController {
   }
 }
 
-module.exports = new MedicoController()
-// ...existing code...
+module.exports = new MedicoController();

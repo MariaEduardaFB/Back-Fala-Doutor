@@ -1,5 +1,4 @@
 
-// import 'dotenv/config';
 require('dotenv').config()
 const fs = require('fs');
 const path = require('path');
@@ -20,7 +19,6 @@ const config = {
 const db = {};
 
 const sequelize = new Sequelize(config.database, config.username, config.password, config);
-
 
 
 fs
