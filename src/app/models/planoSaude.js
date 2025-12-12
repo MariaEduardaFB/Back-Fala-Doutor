@@ -11,6 +11,21 @@ module.exports = (sequelize, DataTypes) => {
       });
       this.hasMany(models.Consulta, { foreignKey: 'plano_id' });
     }
+
+    
+    isAtivo() {
+      if (!this.validade) return false;
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const validade = new Date(this.validade);
+      validade.setHours(23, 59, 59, 999);
+      return validade >= hoje;
+    }
+
+    
+    getStatus() {
+      return this.isAtivo() ? 'ativo' : 'inativo';
+    }
   }
   
   PlanoSaude.init({

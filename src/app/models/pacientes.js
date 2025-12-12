@@ -5,7 +5,10 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Pacientes extends Model {
     static associate(models) {
-      this.belongsTo(models.PlanoSaude, { foreignKey: 'plano_id' });
+      this.belongsTo(models.PlanoSaude, { 
+        foreignKey: 'plano_id',
+        as: 'PlanoSaude'
+      });
       this.hasMany(models.Consulta, { foreignKey: 'paciente_id' });
     }
   }

@@ -6,11 +6,22 @@ class ConsultaController {
       const { paciente_id, medico_id, data_hora } = req.body;
 
       const paciente = await Pacientes.findByPk(paciente_id, {
-        include: [PlanoSaude]
+        include: [{ model: PlanoSaude, as: 'PlanoSaude' }]
       });
 
       if (!paciente || !paciente.plano_id) {
-        return res.status(400).json({ error: 'Paciente sem plano de saúde' });
+        return res.status(400).json({ error: 'Paciente sem plano de saúde. É necessário ter um plano ativo para agendar consulta.' });
+      }
+
+     
+      const planoSaude = paciente.PlanoSaude;
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const validade = new Date(planoSaude.validade);
+      validade.setHours(23, 59, 59, 999);
+      
+      if (validade < hoje) {
+        return res.status(400).json({ error: 'Plano de saúde inativo. Não é possível agendar consulta com plano vencido.' });
       }
 
       const medico = await Medico.findByPk(medico_id, {
