@@ -6,8 +6,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       this.hasMany(models.Pacientes, { foreignKey: 'plano_id' });
       this.belongsToMany(models.Medico, { 
-        through: 'medico_plano',
-        foreignKey: 'plano_id' 
+        through: {
+          model: 'medico_plano'
+        },
+        foreignKey: 'plano_id',
+        otherKey: 'medico_id',
+        timestamps: false
       });
       this.hasMany(models.Consulta, { foreignKey: 'plano_id' });
     }

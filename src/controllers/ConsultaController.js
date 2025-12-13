@@ -3,17 +3,16 @@ const { Consulta, Pacientes, Medico, PlanoSaude } = require('../app/models');
 class ConsultaController {
   async store(req, res) {
     try {
-      const { paciente_id, medico_id, data_hora } = req.body;
+      const { paciente_id, medico_id, data_hora, descricao } = req.body;
 
       const paciente = await Pacientes.findByPk(paciente_id, {
         include: [{ model: PlanoSaude, as: 'PlanoSaude' }]
       });
 
       if (!paciente || !paciente.plano_id) {
-        return res.status(400).json({ error: 'Paciente sem plano de saúde. É necessário ter um plano ativo para agendar consulta.' });
+        return res.status(400).json({ error: 'Patient without health plan. An active plan is required to schedule an appointment.' });
       }
 
-     
       const planoSaude = paciente.PlanoSaude;
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -21,30 +20,37 @@ class ConsultaController {
       validade.setHours(23, 59, 59, 999);
       
       if (validade < hoje) {
-        return res.status(400).json({ error: 'Plano de saúde inativo. Não é possível agendar consulta com plano vencido.' });
+        return res.status(400).json({ error: 'Inactive health plan. Cannot schedule appointment with expired plan.' });
       }
 
-      const medico = await Medico.findByPk(medico_id, {
-        include: [{
-          model: PlanoSaude,
-          where: { id: paciente.plano_id }
-        }]
-      });
-
+      
+      const medico = await Medico.findByPk(medico_id);
+      
       if (!medico) {
-        return res.status(400).json({ error: 'Médico não atende este plano de saúde' });
+        return res.status(400).json({ error: 'Doctor not found' });
       }
 
       const consulta = await Consulta.create({
         paciente_id,
         medico_id,
         plano_id: paciente.plano_id,
-        data_hora
+        data_hora,
+        descricao,
+        status: 'agendada'
       });
 
-      return res.status(201).json(consulta);
+      const consultaCompleta = await Consulta.findByPk(consulta.id, {
+        include: [
+          { model: Pacientes },
+          { model: Medico },
+          { model: PlanoSaude }
+        ]
+      });
+
+      return res.status(201).json(consultaCompleta);
     } catch (error) {
-      return res.status(400).json({ error: 'Erro ao criar consulta', details: error.message });
+      console.error('Error creating appointment:', error);
+      return res.status(400).json({ error: 'Error creating appointment', details: error.message });
     }
   }
 
@@ -87,19 +93,27 @@ class ConsultaController {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { data_hora, status } = req.body;
+      const { data_hora, status, descricao } = req.body;
 
       const consulta = await Consulta.findByPk(id);
 
       if (!consulta) {
-        return res.status(404).json({ error: 'Consulta não encontrada' });
+        return res.status(404).json({ error: 'Appointment not found' });
       }
 
-      await consulta.update({ data_hora, status });
+      await consulta.update({ data_hora, status, descricao });
 
-      return res.status(200).json(consulta);
+      const consultaAtualizada = await Consulta.findByPk(id, {
+        include: [
+          { model: Pacientes },
+          { model: Medico },
+          { model: PlanoSaude }
+        ]
+      });
+
+      return res.status(200).json(consultaAtualizada);
     } catch (error) {
-      return res.status(400).json({ error: 'Erro ao atualizar consulta', details: error.message });
+      return res.status(400).json({ error: 'Error updating appointment', details: error.message });
     }
   }
 

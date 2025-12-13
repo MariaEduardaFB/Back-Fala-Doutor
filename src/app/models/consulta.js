@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   
   Consulta.init({
     data_hora: DataTypes.DATE,
+    descricao: DataTypes.TEXT,
     status: {
       type: DataTypes.STRING,
       defaultValue: 'agendada'

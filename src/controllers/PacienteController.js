@@ -46,7 +46,6 @@ class PacienteController {
                 include: [{ model: PlanoSaude, as: 'PlanoSaude' }]
             })
             
-            console.log('=== DEBUG BACKEND ===')
             console.log('Total de pacientes:', pacientes.length)
             if (pacientes.length > 0) {
                 console.log('Primeiro paciente:', JSON.stringify(pacientes[0], null, 2))
@@ -84,7 +83,7 @@ class PacienteController {
                 return res.status(404).json({ error: "Paciente não encontrado" })
             }
             
-            console.log('=== DEBUG SHOW BACKEND ===')
+            
             console.log('Paciente ID:', id)
             console.log('Paciente encontrado:', JSON.stringify(paciente, null, 2))
             
