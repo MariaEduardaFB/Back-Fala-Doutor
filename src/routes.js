@@ -4,6 +4,7 @@ const MedicoController = require("./controllers/MedicoController")
 const PlanoSaudeController = require("./controllers/PlanoSaudeController")
 const ConsultaController = require("./controllers/ConsultaController")
 const MedicoPlanoController = require("./controllers/MedicoPlanoController")
+const RelatorioController = require("./controllers/RelatorioController")
 
 const routes = Router()
 
@@ -38,5 +39,10 @@ routes.delete("/consultas/:id", ConsultaController.destroy)
 routes.post("/medicos-planos", MedicoPlanoController.store)
 routes.get("/medicos/:medico_id/planos", MedicoPlanoController.index)
 routes.delete("/medicos/:medico_id/planos/:plano_id", MedicoPlanoController.destroy)
+
+routes.get('/relatorios/agendamentos_por_dia', RelatorioController.agendamentosPorDia)
+routes.get('/relatorios/agendamentos_de_um_dia', RelatorioController.agendamentosDeUmDia);
+routes.get('/relatorios/agendamentos_por_mes', RelatorioController.agendamentosPorMes);
+routes.get('/relatorios/agendamentos_por_ano', RelatorioController.agendamentosPorAno);
 
 module.exports = routes
