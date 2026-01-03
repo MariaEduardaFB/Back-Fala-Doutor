@@ -1,4 +1,5 @@
 const { Consulta, Pacientes, Medico, PlanoSaude } = require('../app/models');
+const { Op } = require('sequelize');
 
 class ConsultaController {
   async store(req, res) {
@@ -56,12 +57,26 @@ class ConsultaController {
 
   async index(req, res) {
     try {
+      const { dataInicial, dataFinal } = req.query;
+      const where = {};
+
+      if (dataInicial && dataFinal) {
+        where.data_hora = {
+          [Op.between]: [
+            `${dataInicial} 00:00:00`,
+            `${dataFinal} 23:59:59`
+          ]
+        };
+      }
+
       const consultas = await Consulta.findAll({
+        where,
         include: [
           { model: Pacientes },
           { model: Medico },
           { model: PlanoSaude }
-        ]
+        ],
+        order: [['data_hora', 'DESC']]
       });
       return res.status(200).json(consultas);
     } catch (error) {

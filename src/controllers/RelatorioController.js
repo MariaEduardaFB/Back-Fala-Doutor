@@ -1,78 +1,72 @@
 const { Consulta } = require('../app/models');
 const { Op, Sequelize } = require('sequelize');
 
-module.exports.agendamentosPorDia = async (req, res) => {
-  try {
-    const result = await Consulta.findAll({
-      attributes: [
-        [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM-DD'), 'dia'],
-        [Sequelize.fn('COUNT', Sequelize.col('id')), 'quantidade']
-      ],
-      group: [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM-DD')],
-      order: [[Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM-DD'), 'ASC']],
-      raw: true
-    });
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao gerar relatório', details: error.message });
-  }
-};
+module.exports.buscaAgendamentos = async (req, res) => {
+    const { dataInicial, dataFinal } = req.query;
 
-module.exports.agendamentosDeUmDia = async (req, res) => {
-  try {
-    const { dia } = req.query;
-    if (!dia) return res.status(400).json({ error: 'Informe o dia!' });
+    if (!dataInicial || !dataFinal) {
+        return res.status(400).json({ error: 'Parâmetros dataInicial e dataFinal são obrigatórios.' });
+    }
+    
+    const dataInicialStr = dataInicial.split(' ')[0];
+    const dataFinalStr = dataFinal.split(' ')[0];
 
-    const result = await Consulta.findAll({
-      attributes: [
-        [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM-DD'), 'dia'],
-        [Sequelize.fn('COUNT', Sequelize.col('id')), 'quantidade']
-      ],
-      where: {
-        data_hora: {
-          [Op.gte]: `${dia} 00:00:00`,
-          [Op.lte]: `${dia} 23:59:59`
-        }
-      },
-      group: [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM-DD')],
-      raw: true
-    });
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao gerar relatório', details: error.message });
-  }
-};
+    const dataInicioObj = new Date(`${dataInicialStr}T00:00:00.000Z`);
+    const dataFimObj = new Date(`${dataFinalStr}T23:59:59.999Z`);
 
-module.exports.agendamentosPorMes = async (req, res) => {
-  try {
-    const result = await Consulta.findAll({
-      attributes: [
-        [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM'), 'mes'],
-        [Sequelize.fn('COUNT', Sequelize.col('id')), 'quantidade']
-      ],
-      group: [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM')],
-      order: [[Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY-MM'), 'ASC']],
-      raw: true
-    });
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao gerar relatório', details: error.message });
-  }
-};
+    try {
+        const todas = await Consulta.findAll({
+            attributes: ['id', 'data_hora'],
+            raw: true,
+            order: [['data_hora', 'ASC']]
+        });
+        console.log(`Total de consultas no banco: ${todas.length}`);
+        todas.forEach(c => console.log(`  ID: ${c.id}, Data: ${c.data_hora}`));
+        
+        const result = await Consulta.findAll({
+            attributes: [
+                [Sequelize.fn('DATE', Sequelize.col('data_hora')), 'dia'],
+                [Sequelize.fn('COUNT', Sequelize.col('id')), 'quantidade']
+            ],
+            where: {
+                data_hora: {
+                    [Op.between]: [dataInicioObj, dataFimObj]
+                }
+            },
+            group: [Sequelize.fn('DATE', Sequelize.col('data_hora'))],
+            order: [[Sequelize.fn('DATE', Sequelize.col('data_hora')), 'ASC']],
+            raw: true
+        });
 
-module.exports.agendamentosPorAno = async (req, res) => {
-  try {
-    const result = await Consulta.findAll({
-      attributes: [
-        [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY'), 'ano'],
-        [Sequelize.fn('COUNT', Sequelize.col('id')), 'quantidade']
-      ],
-      group: [Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY')],
-      order: [[Sequelize.fn('TO_CHAR', Sequelize.col('data_hora'), 'YYYY'), 'ASC']],
-      raw: true
-    });
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao gerar relatório', details: error.message });
-  }
-};
+        console.log(`Consultas filtradas: ${result.length}`);
+        console.log("Resultado:", JSON.stringify(result, null, 2));
+
+        return res.json(result);
+    }
+    catch (error) {
+        console.error("Erro na busca:", error);
+        return res.status(500).json({ error: 'Erro ao buscar agendamentos', details: error.message });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
