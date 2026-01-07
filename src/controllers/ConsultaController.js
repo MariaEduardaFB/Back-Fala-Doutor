@@ -11,7 +11,7 @@ class ConsultaController {
       });
 
       if (!paciente || !paciente.plano_id) {
-        return res.status(400).json({ error: 'Patient without health plan. An active plan is required to schedule an appointment.' });
+        return res.status(400).json({ error: 'Paciente sem plano ativo. É necessário ter um plano de saúde ativo para criar a consulta' });
       }
 
       const planoSaude = paciente.PlanoSaude;
@@ -21,14 +21,14 @@ class ConsultaController {
       validade.setHours(23, 59, 59, 999);
       
       if (validade < hoje) {
-        return res.status(400).json({ error: 'Inactive health plan. Cannot schedule appointment with expired plan.' });
+        return res.status(400).json({ error: 'Plano de Saúde vencido. Não é possivel criar uma consulta com o plano fora da validade' });
       }
 
       
       const medico = await Medico.findByPk(medico_id);
       
       if (!medico) {
-        return res.status(400).json({ error: 'Doctor not found' });
+        return res.status(400).json({ error: 'Médico não encontrado' });
       }
 
       const consulta = await Consulta.create({
@@ -50,8 +50,8 @@ class ConsultaController {
 
       return res.status(201).json(consultaCompleta);
     } catch (error) {
-      console.error('Error creating appointment:', error);
-      return res.status(400).json({ error: 'Error creating appointment', details: error.message });
+      console.error('Erro ao criar agendamento:', error);
+      return res.status(400).json({ error: 'Erro ao criar agendamento:', details: error.message });
     }
   }
 
@@ -113,7 +113,7 @@ class ConsultaController {
       const consulta = await Consulta.findByPk(id);
 
       if (!consulta) {
-        return res.status(404).json({ error: 'Appointment not found' });
+        return res.status(404).json({ error: 'Consulta não encontrada' });
       }
 
       await consulta.update({ data_hora, status, descricao });
@@ -128,7 +128,7 @@ class ConsultaController {
 
       return res.status(200).json(consultaAtualizada);
     } catch (error) {
-      return res.status(400).json({ error: 'Error updating appointment', details: error.message });
+      return res.status(400).json({ error: 'Erro ao atualizar a consulta', details: error.message });
     }
   }
 
