@@ -1,0 +1,41 @@
+### 1. Criar um novo paciente (POST)
+POST http://localhost:3000/pacientes
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "cpf": "12345678901",
+  "telefone": "11999999999",
+  "plano_id": null
+}
+
+### 2. Criar outro paciente
+POST http://localhost:3000/pacientes
+Content-Type: application/json
+
+{
+  "nome": "Maria Santos",
+  "cpf": "98765432109",
+  "telefone": "11988888888",
+  "plano_id": null
+}
+
+### 3. Listar todos os pacientes (GET)
+GET http://localhost:3000/pacientes
+
+### 4. Buscar paciente por ID (GET)
+GET http://localhost:3000/pacientes/1
+
+### 5. Atualizar paciente (PUT)
+PUT http://localhost:3000/pacientes/1
+Content-Type: application/json
+
+{
+  "nome": "João Silva Atualizado",
+  "cpf": "12345678901",
+  "telefone": "11991111111",
+  "plano_id": null
+}
+
+### 6. Deletar paciente (DELETE)
+DELETE http://localhost:3000/pacientes/2

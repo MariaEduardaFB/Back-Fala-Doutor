@@ -1,153 +1,138 @@
-const { Consulta, Pacientes, Medico, PlanoSaude } = require('../app/models');
-const { Op } = require('sequelize');
+const Consulta = require("../models/Consulta")
+const Paciente = require("../models/Paciente")
+const Medico = require("../models/Medico")
+const PlanoSaude = require("../models/PlanoSaude")
 
 class ConsultaController {
-  async store(req, res) {
-    try {
-      const { paciente_id, medico_id, data_hora, descricao } = req.body;
 
-      const paciente = await Pacientes.findByPk(paciente_id, {
-        include: [{ model: PlanoSaude, as: 'PlanoSaude' }]
-      });
+    async store(req, res) {
+        try {
+            const { paciente_id, medico_id, data_hora, descricao } = req.body
 
-      if (!paciente || !paciente.plano_id) {
-        return res.status(400).json({ error: 'Paciente sem plano ativo. É necessário ter um plano de saúde ativo para criar a consulta' });
-      }
+            if (!paciente_id || !medico_id || !data_hora) {
+                return res.status(400).json({ error: "Todos os campos são obrigatórios" })
+            }
 
-      const planoSaude = paciente.PlanoSaude;
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      const validade = new Date(planoSaude.validade);
-      validade.setHours(23, 59, 59, 999);
-      
-      if (validade < hoje) {
-        return res.status(400).json({ error: 'Plano de Saúde vencido. Não é possivel criar uma consulta com o plano fora da validade' });
-      }
+            
+            const paciente = await Paciente.findById(paciente_id)
+            if (!paciente) {
+                return res.status(404).json({ error: "Paciente não encontrado" })
+            }
 
-      
-      const medico = await Medico.findByPk(medico_id);
-      
-      if (!medico) {
-        return res.status(400).json({ error: 'Médico não encontrado' });
-      }
+            
+            if (!paciente.plano_id) {
+                return res.status(400).json({ error: "Paciente sem plano ativo. É necessário ter um plano de saúde ativo para criar a consulta" })
+            }
 
-      const consulta = await Consulta.create({
-        paciente_id,
-        medico_id,
-        plano_id: paciente.plano_id,
-        data_hora,
-        descricao,
-        status: 'agendada'
-      });
+            
+            const plano = await PlanoSaude.findById(paciente.plano_id)
+            if (!plano) {
+                return res.status(400).json({ error: "Plano de saúde não encontrado" })
+            }
 
-      const consultaCompleta = await Consulta.findByPk(consulta.id, {
-        include: [
-          { model: Pacientes },
-          { model: Medico },
-          { model: PlanoSaude }
-        ]
-      });
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const validade = new Date(plano.validade);
+            validade.setHours(23, 59, 59, 999);
 
-      return res.status(201).json(consultaCompleta);
-    } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
-      return res.status(400).json({ error: 'Erro ao criar agendamento:', details: error.message });
+            if (validade < hoje) {
+                return res.status(400).json({ error: "Plano de Saúde vencido. Não é possível criar uma consulta com o plano fora da validade" })
+            }
+
+            
+            const medico = await Medico.findById(medico_id)
+            if (!medico) {
+                return res.status(404).json({ error: "Médico não encontrado" })
+            }
+
+            
+            const createdConsulta = await Consulta.create(
+                paciente_id,
+                medico_id,
+                paciente.plano_id,
+                data_hora,
+                descricao
+            )
+
+            return res.status(201).json(createdConsulta)
+
+        } catch (error) {
+            return res.status(400).json({ error: "Erro ao criar consulta", details: error.message })
+        }
     }
-  }
 
-  async index(req, res) {
-    try {
-      const { dataInicial, dataFinal } = req.query;
-      const where = {};
+    async index(req, res) {
+        try {
+            const { dataInicial, dataFinal } = req.query
 
-      if (dataInicial && dataFinal) {
-        where.data_hora = {
-          [Op.between]: [
-            `${dataInicial} 00:00:00`,
-            `${dataFinal} 23:59:59`
-          ]
-        };
-      }
+            const consultas = await Consulta.findAll(dataInicial, dataFinal)
+            return res.status(200).json(consultas)
 
-      const consultas = await Consulta.findAll({
-        where,
-        include: [
-          { model: Pacientes },
-          { model: Medico },
-          { model: PlanoSaude }
-        ],
-        order: [['data_hora', 'DESC']]
-      });
-      return res.status(200).json(consultas);
-    } catch (error) {
-      return res.status(500).json({ error: 'Erro ao buscar consultas', details: error.message });
+        } catch (error) {
+            return res.status(500).json({ error: "Erro ao buscar consultas", details: error.message })
+        }
     }
-  }
 
-  async show(req, res) {
-    try {
-      const { id } = req.params;
-      const consulta = await Consulta.findByPk(id, {
-        include: [
-          { model: Pacientes },
-          { model: Medico },
-          { model: PlanoSaude }
-        ]
-      });
+    async show(req, res) {
+        try {
+            const { id } = req.params
+            const consulta = await Consulta.findById(id)
 
-      if (!consulta) {
-        return res.status(404).json({ error: 'Consulta não encontrada' });
-      }
+            if (!consulta) {
+                return res.status(404).json({ error: "Consulta não encontrada" })
+            }
 
-      return res.status(200).json(consulta);
-    } catch (error) {
-      return res.status(404).json({ error: 'Erro ao buscar consulta', details: error.message });
+            return res.status(200).json(consulta)
+
+        } catch (error) {
+            return res.status(404).json({ error: "Erro ao buscar consulta", details: error.message })
+        }
     }
-  }
 
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const { data_hora, status, descricao } = req.body;
+    async update(req, res) {
+        try {
+            const { id } = req.params
+            const { data_hora, descricao, status } = req.body
 
-      const consulta = await Consulta.findByPk(id);
+            const consulta = await Consulta.findById(id)
 
-      if (!consulta) {
-        return res.status(404).json({ error: 'Consulta não encontrada' });
-      }
+            if (!consulta) {
+                return res.status(404).json({ error: "Consulta não encontrada" })
+            }
 
-      await consulta.update({ data_hora, status, descricao });
+            const consultaAtualizada = await Consulta.update(
+                id,
+                data_hora || consulta.data_hora,
+                descricao || consulta.descricao,
+                status || consulta.status
+            )
 
-      const consultaAtualizada = await Consulta.findByPk(id, {
-        include: [
-          { model: Pacientes },
-          { model: Medico },
-          { model: PlanoSaude }
-        ]
-      });
+            return res.status(200).json(consultaAtualizada)
 
-      return res.status(200).json(consultaAtualizada);
-    } catch (error) {
-      return res.status(400).json({ error: 'Erro ao atualizar a consulta', details: error.message });
+        } catch (error) {
+            return res.status(400).json({ error: "Erro ao atualizar consulta", details: error.message })
+        }
     }
-  }
 
-  async destroy(req, res) {
-    try {
-      const { id } = req.params;
-      const consulta = await Consulta.findByPk(id);
+    async destroy(req, res) {
+        try {
+            const { id } = req.params
 
-      if (!consulta) {
-        return res.status(404).json({ error: 'Consulta não encontrada' });
-      }
+            const deleted = await Consulta.delete(id)
 
-      await consulta.destroy();
+            if (!deleted) {
+                return res.status(404).json({ error: "Consulta não encontrada" })
+            }
 
-      return res.status(200).json({ message: 'Consulta excluída com sucesso' });
-    } catch (error) {
-      return res.status(400).json({ error: 'Erro ao excluir consulta', details: error.message });
+            return res.status(200).json({ message: "Consulta excluída com sucesso" })
+
+        } catch (error) {
+            return res.status(500).json({ error: "Erro ao excluir consulta", details: error.message })
+        }
     }
-  }
+
 }
 
-module.exports = new ConsultaController();
+module.exports = new ConsultaController()
+
+

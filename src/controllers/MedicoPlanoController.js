@@ -1,69 +1,104 @@
-const { Medico, PlanoSaude } = require('../app/models');
+const Medico = require("../models/Medico")
+const PlanoSaude = require("../models/PlanoSaude")
+const MedicoPlano = require("../models/MedicoPlano")
 
 class MedicoPlanoController {
-  async store(req, res) {
-    try {
-      const { medico_id, plano_id } = req.body;
 
-      const medico = await Medico.findByPk(medico_id);
-      const plano = await PlanoSaude.findByPk(plano_id);
+    async store(req, res) {
+        try {
+            const { medico_id } = req.params
+            const { plano_id } = req.body
 
-      if (!medico) {
-        return res.status(404).json({ error: 'Médico não encontrado' });
-      }
+            if (!plano_id) {
+                return res.status(400).json({ error: "plano_id é obrigatório" })
+            }
 
-      if (!plano) {
-        return res.status(404).json({ error: 'Plano não encontrado' });
-      }
+            
+            const medico = await Medico.findById(medico_id)
+            if (!medico) {
+                return res.status(404).json({ error: "Médico não encontrado" })
+            }
 
-      await medico.addPlanoSaude(plano);
+            
+            const plano = await PlanoSaude.findById(plano_id)
+            if (!plano) {
+                return res.status(404).json({ error: "Plano de saúde não encontrado" })
+            }
 
-      return res.status(201).json({ message: 'Médico associado ao plano com sucesso' });
-    } catch (error) {
-      return res.status(400).json({ error: 'Erro ao associar médico ao plano', details: error.message });
+            
+            const associacaoExistente = await MedicoPlano.findByMedicoAndPlano(medico_id, plano_id)
+            if (associacaoExistente) {
+                return res.status(400).json({ error: "Médico já está associado a este plano" })
+            }
+
+            
+            const medicoPlano = await MedicoPlano.create(medico_id, plano_id)
+
+            return res.status(201).json({
+                message: "Médico associado ao plano com sucesso",
+                medico_plano: medicoPlano
+            })
+
+        } catch (error) {
+            return res.status(400).json({ error: "Erro ao associar médico ao plano", details: error.message })
+        }
     }
-  }
 
-  async index(req, res) {
-    try {
-      const { medico_id } = req.params;
+    async index(req, res) {
+        try {
+            const { medico_id } = req.params
 
-      const medico = await Medico.findByPk(medico_id, {
-        include: [PlanoSaude]
-      });
+            
+            const medico = await Medico.findById(medico_id)
+            if (!medico) {
+                return res.status(404).json({ error: "Médico não encontrado" })
+            }
 
-      if (!medico) {
-        return res.status(404).json({ error: 'Médico não encontrado' });
-      }
+            
+            const planos = await MedicoPlano.findByMedicoId(medico_id)
 
-      return res.status(200).json(medico.PlanoSaudes);
-    } catch (error) {
-      return res.status(500).json({ error: 'Erro ao buscar planos do médico', details: error.message });
+            return res.status(200).json({
+                medico,
+                planos
+            })
+
+        } catch (error) {
+            return res.status(500).json({ error: "Erro ao buscar planos do médico", details: error.message })
+        }
     }
-  }
 
-  async destroy(req, res) {
-    try {
-      const { medico_id, plano_id } = req.params;
+    async destroy(req, res) {
+        try {
+            const { medico_id, plano_id } = req.params
 
-      const medico = await Medico.findByPk(medico_id);
-      const plano = await PlanoSaude.findByPk(plano_id);
+            
+            const medico = await Medico.findById(medico_id)
+            if (!medico) {
+                return res.status(404).json({ error: "Médico não encontrado" })
+            }
 
-      if (!medico) {
-        return res.status(404).json({ error: 'Médico não encontrado' });
-      }
+            
+            const plano = await PlanoSaude.findById(plano_id)
+            if (!plano) {
+                return res.status(404).json({ error: "Plano de saúde não encontrado" })
+            }
 
-      if (!plano) {
-        return res.status(404).json({ error: 'Plano não encontrado' });
-      }
+            
+            const deleted = await MedicoPlano.delete(medico_id, plano_id)
 
-      await medico.removePlanoSaude(plano);
+            if (!deleted) {
+                return res.status(404).json({ error: "Associação não encontrada" })
+            }
 
-      return res.status(200).json({ message: 'Associação removida com sucesso' });
-    } catch (error) {
-      return res.status(400).json({ error: 'Erro ao remover associação', details: error.message });
+            return res.status(200).json({ message: "Médico desassociado do plano com sucesso" })
+
+        } catch (error) {
+            return res.status(500).json({ error: "Erro ao desassociar médico do plano", details: error.message })
+        }
     }
-  }
+
 }
 
-module.exports = new MedicoPlanoController();
+module.exports = new MedicoPlanoController()
+
+

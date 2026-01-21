@@ -40,7 +40,6 @@ routes.post("/medicos-planos", MedicoPlanoController.store)
 routes.get("/medicos/:medico_id/planos", MedicoPlanoController.index)
 routes.delete("/medicos/:medico_id/planos/:plano_id", MedicoPlanoController.destroy)
 
-
 routes.get('/relatorios/busca_agendamentos', RelatorioController.buscaAgendamentos)
 ;
 module.exports = routes
