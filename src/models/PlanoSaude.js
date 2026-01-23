@@ -16,7 +16,7 @@ class PlanoSaude {
     return result.rows[0] || null;
   }
 
-  //async findWithRelatedDataByPacienteId(paciente_id, id) {
+  
 
   async findByNome(nome) {
     const result = await connection.query(

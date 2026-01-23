@@ -12,22 +12,22 @@ class PlanoSaudeController {
                 return res.status(400).json({ error: "Todos os campos são obrigatórios" })
             }
 
-            // Validar se paciente existe
+            
             const paciente = await Paciente.findById(paciente_id)
             if (!paciente) {
                 return res.status(404).json({ error: "Paciente não encontrado" })
             }
 
-            // Verificar se plano já existe
+            
             const planoAlreadyExists = await PlanoSaude.findByNome(nome)
             if (planoAlreadyExists) {
                 return res.status(400).json({ error: "Plano de saúde já cadastrado" })
             }
 
-            // Criar plano
+           
             const createdPlano = await PlanoSaude.create(nome, operadora, validade)
 
-            // Vincular plano ao paciente
+            
             const pacienteAtualizado = await Paciente.update(
                 paciente_id,
                 paciente.nome,

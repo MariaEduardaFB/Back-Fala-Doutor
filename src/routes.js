@@ -24,11 +24,12 @@ routes.get("/medicos/:id", MedicoController.show)
 routes.put("/medicos/:id", MedicoController.update)
 routes.delete("/medicos/:id", MedicoController.destroy)
 
-routes.post("/plano_saude", PlanoSaudeController.store)
+
 routes.get("/plano_saude", PlanoSaudeController.index)
 routes.get("/plano_saude/:id", PlanoSaudeController.show)
 routes.put("/plano_saude/:id", PlanoSaudeController.update)
 routes.delete("/plano_saude/:id", PlanoSaudeController.destroy)
+routes.post("/pacientes/:paciente_id/plano_saude",PlanoSaudeController.storeForPaciente)
 
 routes.post("/consultas", ConsultaController.store)
 routes.get("/consultas", ConsultaController.index)
